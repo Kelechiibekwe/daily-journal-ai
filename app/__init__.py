@@ -11,8 +11,6 @@ from app.routes import init_routes
 from flask_migrate import Migrate
 from app.models.models import db
 
-# Load environment variables from .env
-load_dotenv()
 migrate = Migrate()
 
 def create_app(config_class=Config):
