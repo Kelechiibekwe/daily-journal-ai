@@ -23,6 +23,9 @@ class Config:
     TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
     TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 
+    #Eleven labs Configuration
+    ELEVEN_LABS_API_KEY = os.getenv('ELEVEN_LABS_API_KEY')
+
     # Logging Configuration
     @staticmethod
     def setup_logging():

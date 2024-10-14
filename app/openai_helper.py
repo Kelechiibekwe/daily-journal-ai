@@ -1,4 +1,3 @@
-# from openai import OpenAI
 from openai import OpenAI
 from sqlalchemy import text
 
@@ -132,7 +131,7 @@ def generate_prompt_with_hybrid_memory(user_id, query_text):
 
 
     # Call OpenAI to generate the journal prompt based on combined context
-    prompt_response = client.chat.completions.create(model="gpt-4o-mini", 
+    prompt_response = client.chat.completions.create(model=chat_model, 
     messages=messages,
     max_tokens=150)
 
