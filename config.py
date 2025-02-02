@@ -13,7 +13,7 @@ class Config:
     # Email and API credentials
     EMAIL_ADDRESS = os.getenv('EMAIL_ADDRESS')
     EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
-    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+    OPENAI_API_KEY = 'ollama' #| os.getenv('OPENAI_API_KEY')
 
     # Database Configuration
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
@@ -25,6 +25,9 @@ class Config:
 
     #Eleven labs Configuration
     ELEVEN_LABS_API_KEY = os.getenv('ELEVEN_LABS_API_KEY')
+
+    #Eleven labs Configuration
+    NOTEBOOKLM_API_KEY = os.getenv('NOTEBOOKLM_API_KEY')
 
     # Logging Configuration
     @staticmethod

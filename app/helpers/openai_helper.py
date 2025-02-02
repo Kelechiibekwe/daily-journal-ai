@@ -3,7 +3,7 @@ from sqlalchemy import text
 
 client = OpenAI()
 from config import Config
-from app.models.models import db, Prompts, Responses, User_Prompt
+from app.models.models import db, Prompt, Responses, User_Prompt
 import time
 import numpy as np
 import json

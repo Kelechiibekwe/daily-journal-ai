@@ -19,7 +19,7 @@ Welcome to **DailyJournalAI**, a project that combines the power of **Python**, 
 
 - **Programming Language**: Python (3.9+)
 - **Framework**: Flask
-- **Database**: SQLite for local dev, PostgreSQL for production (because, why not?)
+- **Database**: PostgreSQL for production (because, why not?)
 - **ORM**: SQLAlchemy
 - **AI Integration**: GPT-based **LLMs** from OpenAI (because we're modern like that)
 - **Email Handling**: Good old `smtplib` and `imaplib` (for sending and receiving emails)

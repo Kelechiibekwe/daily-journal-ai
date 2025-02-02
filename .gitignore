@@ -3,7 +3,9 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-
+test.py
+data/
+.DS_Store
 *.mp3
 
 .venv/

@@ -1,16 +1,14 @@
 import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from app.openai_helper import generate_prompt_with_hybrid_memory, update_short_term_memory, get_short_term_memory 
+from app.helpers.openai_helper import generate_prompt_with_hybrid_memory, update_short_term_memory, get_short_term_memory 
 import imaplib
 from email.utils import make_msgid
 import email
 from email.header import decode_header
 from app.models.models import db, Prompts, Responses, User_Prompt
 import logging
-from openai import OpenAI
-
-client = OpenAI()
+import openai
 
 from config import Config
 
@@ -60,7 +58,7 @@ def send_journal_email(user_id):
         server.sendmail(sender_email, receiver_email, message.as_string())
 
     # Generate embedding for the email body using OpenAI API
-    embedding = client.embeddings.create(input=[prompt_text],
+    embedding = openai.embeddings.create(input=[prompt_text],
     model=embedding_model).data[0].embedding
 
     # Store the generated prompt in the database
@@ -126,12 +124,17 @@ def check_for_reply(message_id):
                         # Log the email subject and body
                         logger.info(f"Subject: {subject}\nBody: {body}")
 
-                        # Save the response in the Responses table
                         user_prompt = User_Prompt.query.filter_by(message_id=message_id).first()
                         if user_prompt and body:
                             has_reply = True
+                            
+                            is_content_safe = is_content_appropriate(body)
+
+                            if not is_content_safe:
+                                return has_reply
+
                             # Generate embedding for the email body using OpenAI API
-                            embedding = client.embeddings.create(input=[body],
+                            embedding = openai.embeddings.create(input=[body],
                             model=embedding_model).data[0].embedding
 
                             # Save the response with the embedding
@@ -153,3 +156,11 @@ def check_for_reply(message_id):
     finally:
         # Ensure the connection to the mail server is closed
         mail.logout()
+
+def is_content_appropriate(content):
+    """
+    Check if the content is appropriate using OpenAI's Moderation API.
+    Returns False if flagged as inappropriate, True otherwise.
+    """
+    response = openai.Moderation.create(input=content)
+    return not response["results"][0]["flagged"]
