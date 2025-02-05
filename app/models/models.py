@@ -12,6 +12,7 @@ class User(db.Model):
 
     prompts = relationship("Prompt", back_populates="user", cascade="all, delete-orphan")
     entries = relationship("Entry", back_populates="user", cascade="all, delete-orphan")
+    podcasts = relationship("Podcast", back_populates="user", cascade="all, delete-orphan")
 
 
 class Prompt(db.Model):
@@ -36,3 +37,24 @@ class Entry(db.Model):
 
     user = relationship("User", back_populates="entries")
     prompt = relationship("Prompt", back_populates="entries")
+
+class Podcast(db.Model):
+    podcast_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, ForeignKey("user.user_id"), nullable=False)
+    podcast_title = db.Column(db.Text, nullable=True)
+    podcast_url = db.Column(db.Text, nullable=True)
+    podcast_duration= db.Column(db.Integer, nullable=True)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    user = relationship("User", back_populates="podcasts")
+
+
+    def to_dict(self):
+        return {
+            'id': self.podcast_id,
+            'userId': self.user_id,
+            'title': self.podcast_title,
+            'audioUrl': self.podcast_url,
+            'duration': self.podcast_duration,
+            'createdAt': self.created_at.strftime("%B %d, %Y at %I:%M %p") if self.created_at else None
+        }

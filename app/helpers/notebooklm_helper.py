@@ -34,6 +34,8 @@ def poll_status(request_id):
         if error_message:
             raise Exception(f"Error from content API: {error_message}")
         if status == 100:
+            print(f'Polling completed')
             return data 
         print(f'Current status: {status}. Waiting for completion...')
         time.sleep(POLL_INTERVAL)
+    

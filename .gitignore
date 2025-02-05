@@ -4,7 +4,7 @@ __pycache__/
 *.pyo
 *.pyd
 test.py
-data/
+
 .DS_Store
 *.mp3
 

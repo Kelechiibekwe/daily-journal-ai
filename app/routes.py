@@ -1,12 +1,20 @@
 from flask import Flask, jsonify, request, send_file
+from flask_cors import CORS
 import app.helpers.journal_helper as journal
 import app.helpers.prompt_helper as prompt
 import app.helpers.notebooklm_helper as notebook
 import requests
 import time
+import wave
+import requests
+from io import BytesIO
 
-from app.models.models import db, Prompt, Entry
+
+from app.models.models import db, Prompt, Entry, Podcast
+
 def init_routes(app):
+    CORS(app)
+
     @app.route('/')
     def home():
         return "Welcome to StoryLine!"
@@ -32,7 +40,7 @@ def init_routes(app):
             "prompt": prompt_response
         }), 201
     
-    @app.route('/v1/podcast/<int:user_id>', methods=['GET'])
+    @app.route('/v1/podcasts/<int:user_id>', methods=['POST'])
     def generate_podcast(user_id):
         """
         API endpoint that gathers all entries for the given user, uses them as
@@ -55,7 +63,6 @@ def init_routes(app):
         }
 
         try:
-            # Initiate content creation.
             create_response = notebook.create_content(request_data)
             request_id = create_response.get('request_id')
             if not request_id:
@@ -63,36 +70,54 @@ def init_routes(app):
 
             print('Request initiated. Request ID:', request_id)
 
-            # Poll the API for completion.
             status_data = notebook.poll_status(request_id)
             audio_url = status_data.get('audio_url')
             audio_title = status_data.get('audio_title')
 
+            print(f'audio_url: {audio_url}; audio_title: {audio_title}')
             if not audio_url:
                 return jsonify({"error": "Audio URL not returned.", "details": status_data}), 500
 
-            save_path = f"/tmp/podcast_{user_id}_{int(time.time())}.mp3"
-            download_audio(audio_url, save_path)
+            duration = get_wav_duration(audio_url)
 
-            return send_file(save_path, mimetype='audio/mpeg')
+            new_podcast = Podcast(
+                user_id=user_id,
+                podcast_title = audio_title,
+                podcast_url=audio_url,
+                podcast_duration=duration
+            )
 
-            # return jsonify({
-            # "audio_url": audio_url,
-            # "audio_title": audio_title
-        # })
+            db.session.add(new_podcast)
+            db.session.commit()
+
+
+            return jsonify({
+            "audio_url": audio_url,
+            "audio_title": audio_title
+            })
 
         except requests.HTTPError as http_err:
             return jsonify({"error": "HTTP error", "details": str(http_err)}), 500
         except Exception as err:
             return jsonify({"error": "An error occurred", "details": str(err)}), 500
 
+    @app.route('/v1/podcasts/<int:user_id>', methods=['GET'])
+    def get_podcasts(user_id):
+        podcasts = Podcast.query.filter_by(user_id=user_id).all()
 
-def download_audio(audio_url, save_path):
-    # Stream the download to handle large files
-    response = requests.get(audio_url, stream=True)
+        podcasts_list = [podcast.to_dict() for podcast in podcasts]
+        return jsonify(podcasts_list), 200
+    
+    
+def get_wav_duration(url):
+    response = requests.get(url)
     response.raise_for_status()
-    with open(save_path, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            if chunk:
-                f.write(chunk)
-    return save_path
+
+    file_bytes = BytesIO(response.content)
+
+    with wave.open(file_bytes, 'rb') as wav_file:
+        frames = wav_file.getnframes()
+        rate = wav_file.getframerate()
+        duration = frames / float(rate)
+    
+    return duration
