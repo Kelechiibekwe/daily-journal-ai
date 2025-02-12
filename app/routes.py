@@ -1,16 +1,18 @@
 from flask import Flask, jsonify, request, send_file
+from sqlalchemy import cast, Date
+from datetime import datetime
+from sqlalchemy import desc
 from flask_cors import CORS
-import app.helpers.journal_helper as journal
-import app.helpers.prompt_helper as prompt
-import app.helpers.notebooklm_helper as notebook
-import requests
-import time
-import wave
-import requests
 from io import BytesIO
-
+import requests
+import wave
+import pytz
 
 from app.models.models import db, Prompt, Entry, Podcast
+import app.helpers.notebooklm_helper as notebook
+import app.helpers.journal_helper as journal
+import app.helpers.prompt_helper as prompt
+
 
 def init_routes(app):
     CORS(app)
@@ -33,19 +35,38 @@ def init_routes(app):
         return jsonify(result), 201 if "entry_id" in result else 500
     
     @app.route('/v1/prompts/<int:user_id>', methods=['GET'])
-    def send_prompt(user_id):       
-        prompt_response = prompt.generate_prompt(user_id)
-        return jsonify({
-            "message": "Journal email sent",
-            "prompt": prompt_response
-        }), 201
+    def send_prompt(user_id):
+        today = datetime.now(pytz.utc).date()
+        prompt_record = Prompt.query.filter(
+            Prompt.user_id == user_id,
+            cast(Prompt.created_at, Date) == today
+        ).first()
+        
+        if prompt_record:
+            return jsonify({
+                "message": "Prompt already generated for today.",
+                "prompt": prompt_record.prompt_text,
+                "prompt_id": prompt_record.prompt_id
+            }), 200
+        else:
+            new_prompt = prompt.generate_prompt(user_id)
+            return jsonify({
+                "message": "New prompt generated for today.",
+                "prompt": new_prompt.prompt_text,
+                "prompt_id": new_prompt.prompt_id
+            }), 201
+        
+        # new_prompt = prompt.generate_prompt(user_id)
+        # return jsonify({
+        #     "message": "New prompt generated for today.",
+        #     "prompt": new_prompt.prompt_text,
+        #     "prompt_id": new_prompt.prompt_id
+        # }), 201
+        
     
     @app.route('/v1/podcasts/<int:user_id>', methods=['POST'])
     def generate_podcast(user_id):
-        """
-        API endpoint that gathers all entries for the given user, uses them as
-        context to generate a podcast via the AutoContent API, and returns the audio URL.
-        """
+
         entries = Entry.query.filter_by(user_id=user_id).all()
         if not entries:
             return jsonify({"error": "No entries found for this user."}), 404
@@ -103,8 +124,15 @@ def init_routes(app):
 
     @app.route('/v1/podcasts/<int:user_id>', methods=['GET'])
     def get_podcasts(user_id):
-        podcasts = Podcast.query.filter_by(user_id=user_id).all()
-
+        podcasts = Podcast.query.filter_by(user_id=user_id).order_by(desc(Podcast.created_at)).all()
+        if not podcasts:
+            return jsonify([{'id': 0,
+            'userId': user_id,
+            'title': 'No Stories Available',
+            'audioUrl': 'Click “Generate Podcast!” to create your first story',
+            'duration': 0,
+            'createdAt': 'Click “Generate Podcast!” to create your first story'}]), 200
+        
         podcasts_list = [podcast.to_dict() for podcast in podcasts]
         return jsonify(podcasts_list), 200
     

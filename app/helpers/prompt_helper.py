@@ -19,7 +19,6 @@ def generate_prompt(user_id):
     
     recent_entries = [{"entry_text": entry.entry_text, "created_at": entry.created_at} for entry in recent_entries]
     strategy = determine_prompt_strategy(recent_entries)
-    print(f'strategy of recent entries is: {strategy}')
     prompt  = generate_prompt_for_user(user_id, strategy, recent_entries)
     prompt_embedding = client.embeddings.create(input=[prompt], model=embedding_model).data[0].embedding
     new_prompt = Prompt(
@@ -30,21 +29,21 @@ def generate_prompt(user_id):
     db.session.add(new_prompt)
     db.session.commit()
 
-    return prompt
+    return new_prompt
 
 def determine_prompt_strategy(recent_entries):
     if len(recent_entries) == 0:
         return "fresh"
     
     introspection_score = analyze_introspection(recent_entries)
-    print(f'Introspection Score of recent entries is: {introspection_score}')
+    # print(f'Introspection Score of recent entries is: {introspection_score}')
 
     time_since_last_entry = datetime.now() - recent_entries[-1]["created_at"]
-    print(f'time_since_last_entry of recent entries is: {time_since_last_entry}')
+    # print(f'time_since_last_entry of recent entries is: {time_since_last_entry}')
     inactive_threshold = timedelta(days=4)
     
     theme_consistency = calculate_theme_consistency(recent_entries)
-    print(f'theme_consistency of recent entries is: {theme_consistency}')
+    # print(f'theme_consistency of recent entries is: {theme_consistency}')
     
     if time_since_last_entry > inactive_threshold or introspection_score < 4:
         return "personalized"
@@ -173,25 +172,33 @@ def generate_fresh_prompt():
 
 def generate_personalized_prompt(user_id, recent_entries):
 
-    entries_text = "\n".join(entry["entry_text"] for entry in recent_entries)
+    entries_text = "".join(entry["entry_text"] for entry in recent_entries)
+    relevant_past_entries = ""
     relevant_past_entries = get_relevant_long_term_entries(user_id, entries_text)
 
-    relevant_past_entries = ""
     if relevant_past_entries:
-        relevant_past_entries = [f"Response: {entry['response']}" for entry in relevant_past_entries]
+        relevant_past_entries = [f"Response: {entry['entry']}" for entry in relevant_past_entries]
 
-    combined_context = "Here’s what you’ve shared recently:\n" + "\n".join(entries_text) + "\n\n"
+    combined_context = "Here’s what you’ve shared recently:\n" + "".join(entries_text) + "\n\n"
     combined_context += "Based on your previous journal entries:\n" + "\n".join(relevant_past_entries)
 
     system_prompt = (
-            "You are a personalized journaling assistant. Your task is to generate a journaling prompt "
-            "that is tailored to the user's long term experiences and recent reflections. "
-            "Inspire deeper thought and forward-looking reflection."
-        )
+                        " You are an AI journaling assistant that specializes in creating concise,"
+                        " personalized journal prompts. Use any provided context to generate a clear"
+                        " and engaging prompt that encourages users to reflect on their personal growth "
+                        " and daily experiences. Your output should be a single, brief statement or question"
+                        " without additional commentary."
+    )
     
+        # (
+        #         "You are a personalized journaling assistant. Your task is to generate a journaling prompt "
+        #         "that is tailored to the user's long term experiences and recent reflections. "
+        #         "Inspire deeper thought and forward-looking reflection."
+    
+    # print(f"Combined Context: {combined_context}")
     user_prompt = (
-        f"Based on the following context, generate a personalized journaling prompt that encourages "
-        f"the user to reflect further on their life journey. Do not repeat information verbatim; "
+        f"Based on the following context, generate a concise personalized journaling prompt that encourages "
+        f"the user to reflect their personal experience. Do not repeat information verbatim; "
         f"instead, synthesize the themes to inspire deeper reflection.\n\n{combined_context}\n\n"
         f"Respond with only the prompt text."
     )
