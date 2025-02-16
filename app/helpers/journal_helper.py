@@ -1,3 +1,4 @@
+from datetime import datetime
 from openai import OpenAI
 
 from app.models.models import db, Entry
@@ -19,7 +20,8 @@ def create_entry(user_id, entry_text, prompt_id):
         entry_text=entry_text,
         prompt_id = prompt_id,
         theme=theme,
-        embedding_vector=embedding 
+        embedding_vector=embedding,
+        created_at = datetime.now()
     )
 
     try:

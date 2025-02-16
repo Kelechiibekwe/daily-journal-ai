@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
+from datetime import datetime
 import sqlalchemy.dialects.postgresql as pg
 from pgvector.sqlalchemy import Vector
 
@@ -20,7 +21,7 @@ class Prompt(db.Model):
     user_id = db.Column(db.Integer, ForeignKey("user.user_id"), nullable=False)
     prompt_text = db.Column(db.Text, nullable=False)
     embedding_vector = db.Column(Vector(1536), nullable=True)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, nullable=False)
 
     user = relationship("User", back_populates="prompts")
     entries = relationship("Entry", back_populates="prompt", cascade="all, delete-orphan")
@@ -33,10 +34,20 @@ class Entry(db.Model):
     entry_text = db.Column(db.Text, nullable=True)
     theme = db.Column(db.Text, nullable=True)
     embedding_vector = db.Column(Vector(1536), nullable=True)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, nullable=False)
 
     user = relationship("User", back_populates="entries")
     prompt = relationship("Prompt", back_populates="entries")
+
+    def to_dict(self):
+        return {
+            'id': self.entry_id,
+            'userId': self.user_id,
+            'promptId': self.prompt_id,
+            'entryText': self.entry_text,
+            'theme': self.theme,
+            'createdAt': self.created_at.strftime("%B %d, %Y at %I:%M %p") if self.created_at else None
+        }
 
 class Podcast(db.Model):
     podcast_id = db.Column(db.Integer, primary_key=True)
@@ -44,7 +55,7 @@ class Podcast(db.Model):
     podcast_title = db.Column(db.Text, nullable=True)
     podcast_url = db.Column(db.Text, nullable=True)
     podcast_duration= db.Column(db.Integer, nullable=True)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, nullable=False)
 
     user = relationship("User", back_populates="podcasts")
 

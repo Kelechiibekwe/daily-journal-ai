@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 from sqlalchemy import text
 from openai import OpenAI
+import os
 
 from app.models.models import db, Prompt, Entry
+
 
 client = OpenAI()
 
@@ -24,7 +26,8 @@ def generate_prompt(user_id):
     new_prompt = Prompt(
         user_id=user_id,
         prompt_text=prompt,
-        embedding_vector = prompt_embedding
+        embedding_vector = prompt_embedding,
+        created_at = datetime.now()
     )
     db.session.add(new_prompt)
     db.session.commit()
@@ -32,7 +35,7 @@ def generate_prompt(user_id):
     return new_prompt
 
 def determine_prompt_strategy(recent_entries):
-    if len(recent_entries) == 0:
+    if len(recent_entries) <= 5:
         return "fresh"
     
     introspection_score = analyze_introspection(recent_entries)
@@ -182,20 +185,8 @@ def generate_personalized_prompt(user_id, recent_entries):
     combined_context = "Here’s what you’ve shared recently:\n" + "".join(entries_text) + "\n\n"
     combined_context += "Based on your previous journal entries:\n" + "\n".join(relevant_past_entries)
 
-    system_prompt = (
-                        " You are an AI journaling assistant that specializes in creating concise,"
-                        " personalized journal prompts. Use any provided context to generate a clear"
-                        " and engaging prompt that encourages users to reflect on their personal growth "
-                        " and daily experiences. Your output should be a single, brief statement or question"
-                        " without additional commentary."
-    )
+    system_prompt = load_instructions("prompt-instruction.xml")
     
-        # (
-        #         "You are a personalized journaling assistant. Your task is to generate a journaling prompt "
-        #         "that is tailored to the user's long term experiences and recent reflections. "
-        #         "Inspire deeper thought and forward-looking reflection."
-    
-    # print(f"Combined Context: {combined_context}")
     user_prompt = (
         f"Based on the following context, generate a concise personalized journaling prompt that encourages "
         f"the user to reflect their personal experience. Do not repeat information verbatim; "
@@ -242,3 +233,33 @@ def get_relevant_long_term_entries(user_id, query_text):
 
 def generate_hybrid_prompt():
     pass
+
+def generate_writer_block_prompt(journal_text):
+    system_prompt = load_instructions("writers-block-instruction.xml")
+    user_prompt = (
+        "Based on the following journal entry, ask a thought-provoking question "
+        "that will help the writer explore this topic further:\n\n"
+        f"{journal_text}\n\n"
+        "Question:"
+    )
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt}
+    ]
+    response = client.chat.completions.create(
+        model=chat_model,
+        messages=messages,
+        max_tokens=50,
+        temperature=0.7
+    )
+    question = response.choices[0].message.content.strip()
+
+    return question
+
+def load_instructions(instruction):
+    instructions_path = os.path.join(
+        os.path.dirname(__file__),
+        f"instructions/{instruction}"
+    )
+    with open(instructions_path, "r") as file:
+        return file.read()

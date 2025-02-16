@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, send_file
+from flask import send_from_directory
 from sqlalchemy import cast, Date
 from datetime import datetime
 from sqlalchemy import desc
@@ -7,16 +8,17 @@ from io import BytesIO
 import requests
 import wave
 import pytz
+import os
 
 from app.models.models import db, Prompt, Entry, Podcast
 import app.helpers.notebooklm_helper as notebook
+import app.helpers.eleven_labs_helper as eleven
 import app.helpers.journal_helper as journal
 import app.helpers.prompt_helper as prompt
 
 
 def init_routes(app):
-    CORS(app)
-
+    CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
     @app.route('/')
     def home():
         return "Welcome to StoryLine!"
@@ -34,13 +36,58 @@ def init_routes(app):
         result = journal.create_entry(user_id, entry_text, prompt_id)
         return jsonify(result), 201 if "entry_id" in result else 500
     
+    @app.route('/v1/entries/<int:user_id>', methods=['GET'])
+    def get_journal_entries(user_id):
+        entries = Entry.query.filter_by(user_id=user_id)\
+                             .order_by(desc(Entry.created_at))\
+                             .all()
+        
+        entries_list = [entry.to_dict() for entry in entries]
+        
+        return jsonify(entries_list), 200
+    
+    @app.route('/v1/audios', methods=['POST','GET'])
+    def generate_audio():
+        data = request.json
+        entry_text = data.get("entry_text")
+        audio_url = eleven.generate_eleven_labs_audio(entry_text)
+        
+        return jsonify({"audio":audio_url}), 200
+    
+    @app.route('/audio/<filename>', methods=['GET'])
+    def serve_audio(filename):
+        # Create absolute path to the audio folder
+        audio_folder = os.path.abspath(os.path.join(app.root_path, 'data', 'audio-output'))
+        
+        # Ensure the directory exists
+        if not os.path.exists(audio_folder):
+            os.makedirs(audio_folder, exist_ok=True)
+            
+        try:
+            # Ensure the requested file exists
+            file_path = os.path.join(audio_folder, filename)
+            if not os.path.exists(file_path):
+                return jsonify({"error": f"File {filename} not found"}), 404
+                
+            # Use send_from_directory with safe_join for security
+            return send_from_directory(
+                audio_folder,
+                filename,
+                mimetype='audio/mpeg',
+                as_attachment=False
+            )
+            
+        except Exception as e:
+            print(f"Error serving audio file: {str(e)}")
+            return jsonify({"error": "Error serving audio file"}), 500
+    
     @app.route('/v1/prompts/<int:user_id>', methods=['GET'])
     def send_prompt(user_id):
-        today = datetime.now(pytz.utc).date()
+        today = datetime.now().date()
         prompt_record = Prompt.query.filter(
             Prompt.user_id == user_id,
             cast(Prompt.created_at, Date) == today
-        ).first()
+        ).order_by(desc(Prompt.created_at)).first()
         
         if prompt_record:
             return jsonify({
@@ -56,12 +103,18 @@ def init_routes(app):
                 "prompt_id": new_prompt.prompt_id
             }), 201
         
-        # new_prompt = prompt.generate_prompt(user_id)
-        # return jsonify({
-        #     "message": "New prompt generated for today.",
-        #     "prompt": new_prompt.prompt_text,
-        #     "prompt_id": new_prompt.prompt_id
-        # }), 201
+    
+    @app.route('/v1/writer-block-prompt', methods=['POST','GET'])
+    def generate_write_block_prompt():
+        data = request.get_json()
+        journal_text = data.get('content', '')
+        
+        if not journal_text.strip():
+            return jsonify({'question': ''}), 400
+
+        question = prompt.generate_writer_block_prompt(journal_text)
+
+        return jsonify({'question': question})
         
     
     @app.route('/v1/podcasts/<int:user_id>', methods=['POST'])
@@ -105,7 +158,8 @@ def init_routes(app):
                 user_id=user_id,
                 podcast_title = audio_title,
                 podcast_url=audio_url,
-                podcast_duration=duration
+                podcast_duration=duration,
+                created_at = datetime.now()
             )
 
             db.session.add(new_podcast)
