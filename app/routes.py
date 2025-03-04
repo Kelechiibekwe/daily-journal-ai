@@ -17,6 +17,9 @@ import app.helpers.journal_helper as journal
 import app.helpers.prompt_helper as prompt
 
 
+# This script is no longer in use. Routes have now been broken down for improved
+# maintainability using Flask Blueprints.
+
 def init_routes(app):
     CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
     @app.route('/')
@@ -45,6 +48,18 @@ def init_routes(app):
         entries_list = [entry.to_dict() for entry in entries]
         
         return jsonify(entries_list), 200
+    
+    @app.route('/v1/entries/<int:user_id>/<int:entry_id>', methods=['PUT'])
+    def update_journal_entry(user_id, entry_id):
+        data = request.json
+        new_text = data.get("entry_text")
+
+        if not new_text:
+            return jsonify({"error": "entry_text is required"}), 400
+
+        result = journal.update_entry(entry_id, user_id, new_text)
+
+        return jsonify(result), 201 if "entry_id" in result else 500
     
     @app.route('/v1/audios', methods=['POST','GET'])
     def generate_audio():

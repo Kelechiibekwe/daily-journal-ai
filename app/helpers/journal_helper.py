@@ -32,6 +32,22 @@ def create_entry(user_id, entry_text, prompt_id):
         db.session.rollback()
         return {"error": f"Database error: {str(e)}"}, 50
     
+
+def update_entry(entry_id, user_id, new_text):
+    entry = Entry.query.filter_by(id=entry_id, user_id=user_id).first()
+
+    if not entry:
+        return {"error": "Journal entry not found"}, 404
+
+    entry.entry_text = new_text
+    entry.updated_at = datetime.now()
+    try:
+        db.session.commit()
+        return {"message": "Entry updated successfully", "entry_id": entry_id}
+    except Exception as e:
+        db.session.rollback()
+        return {"error": f"Database error: {str(e)}"}, 50
+    
 def extract_theme(entry_text):
     system_prompt = (
         "You are an AI that extracts a single-word theme"

@@ -5,7 +5,9 @@ import os
 
 from config import Config
 
-VOICE_ID = 'nPczCjzI2devNBz1zQrb' # Voice ID for Brian
+VOICE_ID_GEORGE = 'JBFqnCBsd6RMkjVDRZzb'
+VOICE_ID_BRIAN = 'nPczCjzI2devNBz1zQrb'
+VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb' # Voice ID for Brian
 
 def generate_eleven_labs_audio(text):
     """Generates speech audio from text using Eleven Labs API and returns the URL to the audio file."""
@@ -36,6 +38,6 @@ def generate_eleven_labs_audio(text):
         f.write(response.content)
 
     filename_only = os.path.basename(audio_filename)
-    audio_url = request.url_root.rstrip('/') + url_for('serve_audio', filename=filename_only)
+    audio_url = request.url_root.rstrip('/') + url_for('audio_bp.serve_audio', filename=filename_only)
 
     return audio_url
