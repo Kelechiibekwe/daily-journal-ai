@@ -1,40 +1,45 @@
-# **DailyJournalAI**
+# Storyline
 
-Welcome to **DailyJournalAI**, a project that combines the power of **Python**, **Flask**, and **AI** (specifically, large language models or **LLMs**) to help users maintain a journaling habit that benefits mental wellness. With daily AI-generated prompts delivered straight to your inbox, this project aims to make journaling as easy and reflective as possible. Built using modern Python tools, this project handles everything from generating thoughtful prompts to managing journal entries and responses via email. It's more than just a coding project—it's a tool for mindful self-reflection.
-
----
-
-## **Key Features**
-
-- **AI-Generated Prompts**: Integrated with **OpenAI's GPT-based models** to generate meaningful and personalized daily journal prompts.
-- **Flask Web Framework**: Our lightweight, Python-powered backend that handles everything from managing user prompts to sending email.
-- **Email Integration**: Custom email delivery with automatic prompt sending and response tracking via `smtplib` and `imaplib`. We make sure every email has its own unique **Message-ID** for precise tracking.
-- **SQLAlchemy ORM**: Seamless database management using SQLAlchemy, so all your journal entries, prompts, and responses are safely stored.
-- **Dockerized Setup**: A complete **Docker** setup makes deployment and environment configuration simple and hassle-free.
-- **Automated Testing**: Continuous Integration through **GitHub Actions** ensures that everything works like clockwork on every push or pull request.
+Welcome to **Storyline**, your journaling app with AI enhanced features! Tailor-made prompts, text‑to‑speech playback, and immersive podcasts make reflecting on your day feel like an adventure.
 
 ---
 
-## **Tech Stack**
+## 🚀 Features
 
-- **Programming Language**: Python (3.9+)
-- **Framework**: Flask
-- **Database**: PostgreSQL for production (because, why not?)
-- **ORM**: SQLAlchemy
-- **AI Integration**: GPT-based **LLMs** from OpenAI (because we're modern like that)
-- **Email Handling**: Good old `smtplib` and `imaplib` (for sending and receiving emails)
-- **Version Control**: Git, GitHub (because teamwork makes the dream work)
-- **CI/CD**: GitHub Actions (to make sure everything stays solid with automated tests)
-- **Containerization**: Docker (because deployments should be easy)
+- **Personalized Prompts**  
+  Powered by the ChatGPT API, Storyline studies your past entries and journaling habits to craft prompts that spark genuine insight.
 
-## **Future Improvements**
+- **Text‑to‑Speech Playback**  
+  Using the ElevenLabs API, your journal entries come alive as natural‑sounding audio.
 
-Some cool ideas we’re excited about for the future:
+- **AI‑Generated Podcasts**  
+  With the Autocontent API (unofficial NotebookLM), convert your past reflections into an engaging podcast episode.
 
-- Integrating a cloud database (like **PostgreSQL** on AWS or GCP).
-- Adding AI-based sentiment analysis to assess journal responses.
-- Creating a slick **React** or **Next.js** frontend for more user interaction.
-- Deploying the app on **AWS**, **GCP**, or **Azure** for scalability.
+---
+
+## 🛠️ Tech Stack
+
+- **Backend**  
+  - [Flask](https://flask.palletsprojects.com/) — lightweight Python web framework  
+  - **ChatGPT API 4.0‑mini** — for smart prompt generation  
+  - **ElevenLabs API** — for high‑quality text‑to‑speech  
+  - **Autocontent API** — for transforming entries into podcast scripts  
+
+- **Frontend**  
+  - [Next.js](https://nextjs.org/) (built on React) — delivers a smooth, dynamic UI  
+  - Hosted in a separate repository for clean separation of concerns
+
+- **Containerization**  
+  - [Docker](https://www.docker.com/) — ensures consistent deployments and easy scalability
+
+---
+
+## 🔭 What’s Next
+
+I’m excited to refine:
+- **Context‑window management** to make prompts even more relevant  
+- **Advanced React patterns** for an ultra‑responsive interface  
+- **Expanded AI features** to deepen your journaling journey  
 
 ---
 
@@ -45,13 +50,12 @@ Some cool ideas we’re excited about for the future:
 - AI
 - LLM (Large Language Models)
 - OpenAI
-- Email Automation
 - SQLAlchemy
-- GitHub Actions
 - Docker
 - CI/CD
 - RESTful API
+- RAG Pipeline
 
 ---
 
-That’s it! Thanks for checking out DailyJournalAI—whether you're here to contribute or to see how I put things together, I hope you enjoy it as much as I did building it!
+Thanks for checking out Storyline! Let’s turn your thoughts into stories. 🌟
