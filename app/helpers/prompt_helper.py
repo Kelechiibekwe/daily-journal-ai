@@ -1,5 +1,5 @@
+from sqlalchemy import text, cast, Date, desc
 from datetime import datetime, timedelta
-from sqlalchemy import text
 from openai import OpenAI
 import os
 
@@ -33,6 +33,14 @@ def generate_prompt(user_id):
     db.session.commit()
 
     return new_prompt
+
+def get_latest_prompt(user_id):
+    today = datetime.now().date()
+    prompt_record = Prompt.query.filter(
+        Prompt.user_id == user_id,
+        cast(Prompt.created_at, Date) == today
+    ).order_by(desc(Prompt.created_at)).first()
+    return prompt_record
 
 def determine_prompt_strategy(recent_entries):
     if len(recent_entries) <= 5:

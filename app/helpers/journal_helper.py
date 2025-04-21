@@ -1,3 +1,4 @@
+from flask import jsonify
 from datetime import datetime
 from openai import OpenAI
 
@@ -27,14 +28,14 @@ def create_entry(user_id, entry_text, prompt_id):
     try:
         db.session.add(new_entry)
         db.session.commit()
-        return {"message": "Entry saved successfully", "entry_id": new_entry.entry_id}
+        return new_entry, 200
     except Exception as e:
         db.session.rollback()
-        return {"error": f"Database error: {str(e)}"}, 50
+        return {"error": f"Database error: {str(e)}"}, 500
     
 
 def update_entry(entry_id, user_id, new_text):
-    entry = Entry.query.filter_by(id=entry_id, user_id=user_id).first()
+    entry = Entry.query.filter_by(entry_id=entry_id, user_id=user_id).first()
 
     if not entry:
         return {"error": "Journal entry not found"}, 404
@@ -43,10 +44,10 @@ def update_entry(entry_id, user_id, new_text):
     entry.updated_at = datetime.now()
     try:
         db.session.commit()
-        return {"message": "Entry updated successfully", "entry_id": entry_id}
+        return entry, 200
     except Exception as e:
         db.session.rollback()
-        return {"error": f"Database error: {str(e)}"}, 50
+        return {"error": f"Database error: {str(e)}"}, 500
     
 def extract_theme(entry_text):
     system_prompt = (

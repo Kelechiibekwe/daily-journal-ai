@@ -29,7 +29,7 @@ def create_app(config_class=Config):
     from app.routes.prompts_routes import prompt_bp
     from app.routes.podcast_routes import podcast_bp
 
-    CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+    CORS(app, resources={r"/*": {"origins": "http://localhost:3001"}})
 
     app.register_blueprint(audio_bp)
     app.register_blueprint(entry_bp)

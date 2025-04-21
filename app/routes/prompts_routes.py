@@ -9,12 +9,7 @@ prompt_bp = Blueprint('prompt', __name__, url_prefix='/v1')
 
 @prompt_bp.route('/prompts/<int:user_id>', methods=['GET'])
 def send_prompt(user_id):
-    today = datetime.now().date()
-    prompt_record = Prompt.query.filter(
-        Prompt.user_id == user_id,
-        cast(Prompt.created_at, Date) == today
-    ).order_by(desc(Prompt.created_at)).first()
-    
+    prompt_record = prompt.get_latest_prompt(user_id)
     if prompt_record:
         return jsonify({
             "message": "Prompt already generated for today.",
